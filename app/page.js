@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { firestore } from "../firebase";
 import debounce from "lodash/debounce";
 import { CiSearch } from "react-icons/ci";
+import { IoIosRemoveCircle, IoIosAddCircle } from "react-icons/io";
 import {
   Box,
   Stack,
@@ -12,6 +13,8 @@ import {
   TextField,
   Button,
   Container,
+  Divider,
+  IconButton,
 } from "@mui/material";
 import {
   collection,
@@ -183,7 +186,7 @@ export default function Home() {
             gap={3}
             sx={{ transform: "translate(-50%, -50%)" }}
           >
-            <Typography variant="h3">Add Item</Typography>
+            <Typography variant="h4">Add Item</Typography>
             <Stack width="100%" direction="row" spacing={2}>
               <TextField
                 variant="outlined"
@@ -218,67 +221,94 @@ export default function Home() {
           </Box>
         </Modal>
 
-        {/* <Box>
-			<Typography>Inventory</Typography>
-		</Box> */}
         <Box
-          width="100%"
           display="flex"
-          justifyContent="flex-end"
+          flexDirection="row"
+          justifyContent="space-between"
           alignItems="center"
-          gap={2}
-          p={2}
+          width="100%"
         >
-          <Button variant="contained" onClick={() => handleOpen()}>
-            Add new Item
-          </Button>
-          {/* search functionality */}
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            gap={2}
-          >
-            {/* search icon */}
-            <CiSearch
-              sx={{
-                color: "action.active",
-                my: 0.5,
-                mr: 0.5,
-                opacity: 0.5,
-                transition: (theme) => theme.transitions.create("opacity"),
-                "&:hover": { opacity: 0.8 },
-                fontSize: 20,
-              }}
-            />
-            <TextField
-              variant="standard"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setError(false);
-              }}
-              error={error}
-              placeholder={error ? "Please enter item name" : ""}
-              sx={{ borderColor: error ? "red" : "inherit" }}
-            />
-          </Box>
-        </Box>
-
-        <Box border="1px solid #333">
-          <Box
-            width="800px"
-            height="100px"
-            bgcolor="#ADD8E6"
-            display="flex"
-            alignItems="center"
-            justifyContent={"center"}
-          >
-            <Typography variant="h3" color="#333">
-              Inventory Items
+          <Box>
+            <Typography variant="h4" color="#333">
+              Inventory
             </Typography>
           </Box>
-          <Stack width="800px" height="300px" spacing={2} overflow="auto">
+          <Box
+            width="100%"
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="center"
+            gap={2}
+            p={2}
+          >
+            <Button variant="contained" onClick={() => handleOpen()}>
+              Add new Item
+            </Button>
+            {/* search functionality */}
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              gap={2}
+            >
+              {/* search icon */}
+              <CiSearch
+                sx={{
+                  color: "action.active",
+                  my: 0.5,
+                  mr: 0.5,
+                  opacity: 0.5,
+                  transition: (theme) => theme.transitions.create("opacity"),
+                  "&:hover": { opacity: 0.8 },
+                  fontSize: 20,
+                }}
+              />
+              <TextField
+                variant="standard"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setError(false);
+                }}
+                error={error}
+                placeholder={error ? "Please enter item name" : ""}
+                sx={{ borderColor: error ? "red" : "inherit" }}
+              />
+            </Box>
+          </Box>
+        </Box>
+        <Divider
+          variant="middle"
+          sx={{
+            borderColor: "#ccc", // Set a distinct color for the divider
+            borderWidth: 1, // Adjust the thickness if needed
+            width: "100%", // Ensure it takes full width
+          }}
+        />
+        <Box width="100%" height="100%">
+          {/* make overflow look like apple scroll bar */}
+          <Stack
+            width="100%"
+            height="79vh"
+            spacing={2}
+            overflow="auto"
+            sx={{
+              "&::-webkit-scrollbar": {
+                width: "0.4em",
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "#f1f1f1",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                background: "#888",
+                borderRadius: "10px",
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                // lighter shade of thumb color
+                background: "#fafafa",
+              },
+            }}
+          >
             {loading ? (
               <Box>
                 <Typography variant="h6" color="#333" align="center" p={2}>
@@ -295,30 +325,46 @@ export default function Home() {
               inventory.map(({ name, quantity }) => (
                 <Box
                   key={name}
-                  minHeight="150px"
+                  minHeight="70px"
                   width="100%"
                   bgcolor="#f0f0f0"
                   display="flex"
                   alignItems="center"
                   justifyContent="space-between"
-                  padding={5}
+                  padding={2}
                 >
-                  <Typography variant="h3" color="#333" textAlign="center">
+                  <Typography variant="h6" color="#333" textAlign="center">
                     {name.charAt(0).toUpperCase() + name.slice(1)}
                   </Typography>
-                  <Typography variant="h3" color="#333" textAlign="center">
-                    {quantity}
-                  </Typography>
+
                   <Stack direction="row" spacing={2}>
-                    <Button variant="contained" onClick={() => addItem(name)}>
-                      Add
-                    </Button>
-                    <Button
+                    {/* <Button
                       variant="contained"
                       onClick={() => removeItem(name)}
                     >
                       Remove
-                    </Button>
+                    </Button> */}
+                    <IconButton
+                      aria-label="delete"
+                      color="primary"
+                      onClick={() => removeItem(name)}
+                    >
+                      <IoIosRemoveCircle />
+                    </IconButton>
+                    <Typography variant="h6" color="#333" textAlign="center">
+                      {quantity}
+                    </Typography>
+
+                    {/* <Button variant="contained" onClick={() => addItem(name)}>
+                      Add
+                    </Button> */}
+                    <IconButton
+                      aria-label="add"
+                      color="primary"
+                      onClick={() => addItem(name)}
+                    >
+                      <IoIosAddCircle />
+                    </IconButton>
                   </Stack>
                 </Box>
               ))
