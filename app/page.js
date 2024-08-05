@@ -280,9 +280,9 @@ export default function Home() {
         <Divider
           variant="middle"
           sx={{
-            borderColor: "#ccc", // Set a distinct color for the divider
-            borderWidth: 1, // Adjust the thickness if needed
-            width: "100%", // Ensure it takes full width
+            borderColor: "#ccc",
+            borderWidth: 1, 
+            width: "100%", 
           }}
         />
         <Box width="100%" height="100%">
