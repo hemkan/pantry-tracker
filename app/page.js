@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useState, useEffect, useCallback } from "react";
 import { firestore } from "../firebase";
 import debounce from "lodash/debounce";
+import { CiSearch } from "react-icons/ci";
 import {
   Box,
   Stack,
@@ -10,6 +11,7 @@ import {
   Modal,
   TextField,
   Button,
+  Container,
 } from "@mui/material";
 import {
   collection,
@@ -96,7 +98,8 @@ export default function Home() {
     // clear the itemName
     setItemName("");
 
-    await updateInventory();
+    // run the search function
+    await debouncedSearch(searchTerm);
   };
 
   //   search item
@@ -155,159 +158,174 @@ export default function Home() {
   }, []); // run only once because of empty array
 
   return (
-    // modal for adding
-    <Box
-      width="100vw"
-      height="100vh"
-      display="flex"
-      flexDirection={"column"}
-      justifyContent="center"
-      alignItems="center"
-      gap={2}
-    >
-      <Modal open={open} onClose={handleClose}>
+    <Container maxWidth="md">
+      <Box
+        width="100%"
+        display="flex"
+        flexDirection={"column"}
+        justifyContent="center"
+        alignItems="center"
+        gap={2}
+        p={2}
+      >
+        <Modal open={open} onClose={handleClose}>
+          <Box
+            position="absolute"
+            top="50%"
+            left="50%"
+            width={400}
+            bgcolor="white"
+            border="2px solid #000"
+            boxShadow={24}
+            p={4}
+            display="flex"
+            flexDirection="column"
+            gap={3}
+            sx={{ transform: "translate(-50%, -50%)" }}
+          >
+            <Typography variant="h3">Add Item</Typography>
+            <Stack width="100%" direction="row" spacing={2}>
+              <TextField
+                variant="outlined"
+                fullWidth
+                value={addingItemName}
+                onChange={(e) => {
+                  setAddingItemName(e.target.value);
+                  setAddingError(false);
+                }}
+                error={addingError}
+                placeholder={addingError ? "Please enter item name" : ""}
+                sx={{
+                  borderColor: addingError ? "red" : "inherit",
+                }}
+              />
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  // if item name is empty
+                  if (addingItemName.trim() === "") {
+                    setAddingError(true);
+                    return;
+                  }
+                  addItem(addingItemName);
+                  setAddingItemName("");
+                  handleClose();
+                }}
+              >
+                Add
+              </Button>
+            </Stack>
+          </Box>
+        </Modal>
+
+        {/* <Box>
+			<Typography>Inventory</Typography>
+		</Box> */}
         <Box
-          position="absolute"
-          top="50%"
-          left="50%"
-          width={400}
-          bgcolor="white"
-          border="2px solid #000"
-          boxShadow={24}
-          p={4}
+          width="100%"
           display="flex"
-          flexDirection="column"
-          gap={3}
-          sx={{ transform: "translate(-50%, -50%)" }}
+          justifyContent="flex-end"
+          alignItems="center"
+          gap={2}
+          p={2}
         >
-          <Typography variant="h3">Add Item</Typography>
-          <Stack width="100%" direction="row" spacing={2}>
-            <TextField
-              variant="outlined"
-              fullWidth
-              value={addingItemName}
-              onChange={(e) => {
-                setAddingItemName(e.target.value);
-                setAddingError(false);
-              }}
-              error={addingError}
-              placeholder={addingError ? "Please enter item name" : ""}
+          <Button variant="contained" onClick={() => handleOpen()}>
+            Add new Item
+          </Button>
+          {/* search functionality */}
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            gap={2}
+          >
+            {/* search icon */}
+            <CiSearch
               sx={{
-                borderColor: addingError ? "red" : "inherit",
+                color: "action.active",
+                my: 0.5,
+                mr: 0.5,
+                opacity: 0.5,
+                transition: (theme) => theme.transitions.create("opacity"),
+                "&:hover": { opacity: 0.8 },
+                fontSize: 20,
               }}
             />
-            <Button
-              variant="outlined"
-              onClick={() => {
-                // if item name is empty
-                if (addingItemName.trim() === "") {
-                  setAddingError(true);
-                  return;
-                }
-                addItem(addingItemName);
-                setAddingItemName("");
-                handleClose();
+            <TextField
+              variant="standard"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setError(false);
               }}
-            >
-              Add
-            </Button>
+              error={error}
+              placeholder={error ? "Please enter item name" : ""}
+              sx={{ borderColor: error ? "red" : "inherit" }}
+            />
+          </Box>
+        </Box>
+
+        <Box border="1px solid #333">
+          <Box
+            width="800px"
+            height="100px"
+            bgcolor="#ADD8E6"
+            display="flex"
+            alignItems="center"
+            justifyContent={"center"}
+          >
+            <Typography variant="h3" color="#333">
+              Inventory Items
+            </Typography>
+          </Box>
+          <Stack width="800px" height="300px" spacing={2} overflow="auto">
+            {loading ? (
+              <Box>
+                <Typography variant="h6" color="#333" align="center" p={2}>
+                  Loading...
+                </Typography>
+              </Box>
+            ) : inventory.length === 0 ? (
+              <Box>
+                <Typography variant="h6" color="#333" align="center" p={2}>
+                  No items found
+                </Typography>
+              </Box>
+            ) : (
+              inventory.map(({ name, quantity }) => (
+                <Box
+                  key={name}
+                  minHeight="150px"
+                  width="100%"
+                  bgcolor="#f0f0f0"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  padding={5}
+                >
+                  <Typography variant="h3" color="#333" textAlign="center">
+                    {name.charAt(0).toUpperCase() + name.slice(1)}
+                  </Typography>
+                  <Typography variant="h3" color="#333" textAlign="center">
+                    {quantity}
+                  </Typography>
+                  <Stack direction="row" spacing={2}>
+                    <Button variant="contained" onClick={() => addItem(name)}>
+                      Add
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={() => removeItem(name)}
+                    >
+                      Remove
+                    </Button>
+                  </Stack>
+                </Box>
+              ))
+            )}
           </Stack>
         </Box>
-      </Modal>
-      <Button variant="contained" onClick={() => handleOpen()}>
-        Add new Item
-      </Button>
-      {/* search functionality */}
-      <Box
-        width="800px"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        gap={2}
-      >
-        <TextField
-          variant="outlined"
-          fullWidth
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setError(false);
-          }}
-          error={error}
-          placeholder={error ? "Please enter item name" : ""}
-          sx={{ borderColor: error ? "red" : "inherit" }}
-        />
-        <Button
-          variant="outlined"
-          onClick={() => {
-            if (searchTerm.trim() === "") {
-              setError(true);
-              return;
-            }
-            searchItem(searchTerm);
-          }}
-        >
-          Search
-        </Button>
       </Box>
-
-      <Box border="1px solid #333">
-        <Box
-          width="800px"
-          height="100px"
-          bgcolor="#ADD8E6"
-          display="flex"
-          alignItems="center"
-          justifyContent={"center"}
-        >
-          <Typography variant="h3" color="#333">
-            Inventory Items
-          </Typography>
-        </Box>
-        <Stack width="800px" height="300px" spacing={2} overflow="auto">
-          {loading ? (
-            <Box>
-              <Typography variant="h6" color="#333" align="center" p={2}>
-                Loading...
-              </Typography>
-            </Box>
-          ) : inventory.length === 0 ? (
-            <Box>
-              <Typography variant="h6" color="#333" align="center" p={2}>
-                No items found
-              </Typography>
-            </Box>
-          ) : (
-            inventory.map(({ name, quantity }) => (
-              <Box
-                key={name}
-                minHeight="150px"
-                width="100%"
-                bgcolor="#f0f0f0"
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                padding={5}
-              >
-                <Typography variant="h3" color="#333" textAlign="center">
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </Typography>
-                <Typography variant="h3" color="#333" textAlign="center">
-                  {quantity}
-                </Typography>
-                <Stack direction="row" spacing={2}>
-                  <Button variant="contained" onClick={() => addItem(name)}>
-                    Add
-                  </Button>
-                  <Button variant="contained" onClick={() => removeItem(name)}>
-                    Remove
-                  </Button>
-                </Stack>
-              </Box>
-            ))
-          )}
-        </Stack>
-      </Box>
-    </Box>
+    </Container>
   );
 }
