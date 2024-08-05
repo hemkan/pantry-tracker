@@ -1,7 +1,8 @@
 "use client";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { firestore } from "../firebase";
+import debounce from "lodash/debounce";
 import {
   Box,
   Stack,
@@ -36,6 +37,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [addingError, setAddingError] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // update firebase
   const updateInventory = async () => {
@@ -69,9 +71,7 @@ export default function Home() {
       if (quantity === 1) {
         await deleteDoc(docRef);
       } else {
-        await updateDoc(docRef, {
-          quantity: quantity - 1,
-        });
+        await updateDoc(docRef, { quantity: quantity - 1 });
       }
     }
     await updateInventory();
@@ -125,10 +125,26 @@ export default function Home() {
     setInventory(inventoryList);
   };
 
+  const debouncedSearch = useCallback(
+    debounce(async (term) => {
+      await searchItem(term);
+    }, 300),
+    []
+  );
+
+  useEffect(() => {
+    updateInventory();
+  }, []);
+
+  useEffect(() => {
+    debouncedSearch(searchTerm);
+  }, [searchTerm, debouncedSearch]);
+
   const handleOpen = () => {
     setOpen(true);
     setAddingItemName("");
   };
+
   const handleClose = () => {
     setOpen(false);
     setAddingItemName("");
@@ -212,28 +228,23 @@ export default function Home() {
         <TextField
           variant="outlined"
           fullWidth
-          value={itemName}
+          value={searchTerm}
           onChange={(e) => {
-            setItemName(e.target.value);
-            if (error) setError(false);
+            setSearchTerm(e.target.value);
+            setError(false);
           }}
           error={error}
           placeholder={error ? "Please enter item name" : ""}
-          sx={{
-            borderColor: error ? "red" : "inherit",
-          }}
+          sx={{ borderColor: error ? "red" : "inherit" }}
         />
         <Button
           variant="outlined"
           onClick={() => {
-            if (itemName.trim() === "") {
+            if (searchTerm.trim() === "") {
               setError(true);
               return;
             }
-            const quantity = searchItem(itemName);
-            if (quantity > 0) {
-              setInventory([{ name: itemName, quantity }]);
-            }
+            searchItem(searchTerm);
           }}
         >
           Search
@@ -296,7 +307,6 @@ export default function Home() {
             ))
           )}
         </Stack>
-        {/* <Typography variant="h1">Inventory Management</Typography> */}
       </Box>
     </Box>
   );
